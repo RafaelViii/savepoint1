@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accounting Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <h2>HYDROMED <span id="navToggle">☰</span></h2>
+      <nav>
+        <a href="#" class="active" data-page="dashboard">Dashboard</a>
+        <a href="#" data-page="inventory">Inventory</a>
+        <a href="#" data-page="journals">Journals</a>
+        <a href="#" data-page="accounts">Accounts</a>
+        <a href="#" data-page="trial">Trial Balance</a>
+        <a href="#" data-page="financials">Financial Statements</a>
+        <a href="#" data-page="adjustments">Adjustments</a>
+        <a href="#" data-page="reports">Reports</a>
+        <a href="#" data-page="settings">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <!-- === DASHBOARD === -->
+      <div class="page active" id="dashboard">
+        <header>
+          <h1>Dashboard</h1>
+          <p>Accounting system overview</p>
+        </header>
+
+        <div class="cards">
+          <div class="card"><h3>Total Assets</h3><div class="value">₱500,000</div></div>
+          <div class="card"><h3>Liabilities</h3><div class="value">₱200,000</div></div>
+          <div class="card"><h3>Revenue</h3><div class="value">₱120,000</div></div>
+          <div class="card"><h3>Expenses</h3><div class="value">₱75,500</div></div>
+          <div class="card"><h3>Net Profit</h3><div class="value">₱44,500</div></div>
+        </div>
+
+        <div class="charts">
+          <div class="chart-card"><h3>Income vs Expenses</h3><canvas id="revExp"></canvas></div>
+          <div class="chart-card"><h3>Cash Flow Trends</h3><canvas id="cashFlow"></canvas></div>
+          <div class="chart-card"><h3>Profit Margins</h3><canvas id="profitMargin"></canvas></div>
+        </div>
+
+        <div class="transactions">
+          <h3>Recent Transactions</h3>
+          <table>
+            <thead>
+              <tr><th>Date</th><th>Description</th><th>Amount</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td class="date">26-01-10</td><td>Invoice #1023</td><td>₱5,000</td><td>Paid</td></tr>
+              <tr><td class="date">26-01-11</td><td>Invoice #1024</td><td>₱7,500</td><td>Unpaid</td></tr>
+              <tr><td class="date">26-01-12</td><td>Invoice #1025</td><td>₱3,200</td><td>Paid</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="alerts">
+          <h3>Alerts</h3>
+          <table>
+            <thead>
+              <tr><th>Invoice</th><th>Due Date</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>#1024</td><td class="date">26-01-15</td><td>Overdue</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- === INVENTORY PAGE === -->
+      <div class="page" id="inventory">
+        <header class="inventory-header">
+          <h2>Inventory Management</h2>
+          
+          <div class="inventory-controls">
+            <div class="date-controls">
+              <select id="monthSelect">
+                <option value="0">January</option>
+                <option value="1">February</option>
+                <option value="2">March</option>
+                <option value="3">April</option>
+                <option value="4">May</option>
+                <option value="5">June</option>
+                <option value="6">July</option>
+                <option value="7">August</option>
+                <option value="8">September</option>
+                <option value="9">October</option>
+                <option value="10">November</option>
+                <option value="11">December</option>
+              </select>
+              <input type="number" id="yearInput" placeholder="2026" min="2000" max="2100" value="2026">
+              <button id="goDate">Go</button>
+            </div>
+            
+            <div class="search-add-controls">
+              <input type="text" id="searchProduct" placeholder="Search...">
+              <button id="addProductBtn" class="btn-add">+ Add</button>
+            </div>
+          </div>
+        </header>
+
+        <div class="view-toggle">
+          <button id="calendarViewBtn" class="active">Calendar View</button>
+          <button id="listViewBtn">List View</button>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendarViewContainer" class="calendar-view">
+          <div class="calendar-header" id="calendarHeader">January 2026</div>
+          <div class="calendar-grid">
+            <div class="calendar-day-header">Sun</div>
+            <div class="calendar-day-header">Mon</div>
+            <div class="calendar-day-header">Tue</div>
+            <div class="calendar-day-header">Wed</div>
+            <div class="calendar-day-header">Thu</div>
+            <div class="calendar-day-header">Fri</div>
+            <div class="calendar-day-header">Sat</div>
+          </div>
+          <div class="calendar-grid" id="calendarDays"></div>
+        </div>
+
+        <!-- List View -->
+        <div id="listViewContainer" class="list-view">
+          <div id="inventoryBody">
+            <!-- JS inserts inventory cards grouped by category -->
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add Product Modal -->
+  <div class="modal" id="addProductModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Add Product</h2>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <form id="addProductForm">
+        <div class="form-group">
+          <label for="productDate">Date</label>
+          <input type="date" id="productDate" required>
+        </div>
+        <div class="form-group">
+          <label for="productCategory">Category</label>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <select id="productCategory" required style="flex: 1;">
+              <option value="">Select Category</option>
+            </select>
+            <button type="button" id="manageCategoriesBtn" style="padding: 0.6rem; border: 1px solid #d1d5db; background: white; color: #374151; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+              ⚙️ Manage
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="productName">Product Name</label>
+          <input type="text" id="productName" required>
+        </div>
+        <div class="form-group">
+          <label for="productBatch">Batch / Expiry</label>
+          <input type="text" id="productBatch" required>
+        </div>
+        <div class="form-group">
+          <label for="productQty">Quantity</label>
+          <input type="number" id="productQty" min="0" required>
+        </div>
+        <div class="form-group">
+          <label for="productStatus">Status</label>
+          <select id="productStatus" required>
+            <option value="Available">Available</option>
+            <option value="Low Stock">Low Stock</option>
+            <option value="Out of Stock">Out of Stock</option>
+          </select>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" id="cancelBtn">Cancel</button>
+          <button type="submit" class="btn-submit">Add Product</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Category Management Modal -->
+  <div class="modal" id="categoryModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Manage Categories</h2>
+        <button class="modal-close" id="closeCategoryModal">&times;</button>
+      </div>
+      
+      <div class="category-list" id="categoryList">
+        <!-- Categories will be inserted here -->
+      </div>
+      
+      <div class="add-category-form">
+        <input type="text" id="newCategoryInput" placeholder="Enter new category name...">
+        <button id="addCategoryBtn">+ Add</button>
+      </div>
+      
+      <div class="form-actions" style="margin-top: 1.5rem;">
+        <button type="button" class="btn-cancel" id="closeCategoryBtn">Done</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Sidebar toggle
+    const sidebar = document.getElementById('sidebar');
+    const navToggle = document.getElementById('navToggle');
+    navToggle.addEventListener('click', () => sidebar.classList.toggle('open'));
+
+    // Page navigation
+    const pageLinks = document.querySelectorAll('.sidebar nav a');
+    const pages = document.querySelectorAll('.page');
+
+    pageLinks.forEach(link => {
+      link.addEventListener('click', e => {
+        e.preventDefault();
+        const target = link.dataset.page;
+
+        pages.forEach(p => p.classList.remove('active'));
+        document.getElementById(target).classList.add('active');
+
+        pageLinks.forEach(l => l.classList.remove('active'));
+        link.classList.add('active');
+        
+        // Close sidebar on mobile after clicking
+        if (window.innerWidth < 768) {
+          sidebar.classList.remove('open');
+        }
+      });
+    });
+
+    // Charts
+    new Chart(document.getElementById('revExp'), {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [
+          { label: 'Income', data: [15000,18000,20000,17000,22000,28000], borderColor:'#2563eb', tension:0.4, fill:false },
+          { label: 'Expenses', data: [9000,11000,12000,10500,13000,15000], borderColor:'#ef4444', tension:0.4, fill:false }
+        ]
+      },
+      options: { responsive:true, plugins:{ legend:{ position:'bottom' } } }
+    });
+
+    new Chart(document.getElementById('cashFlow'), {
+      type: 'bar',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [{ label: 'Cash Flow', data: [8000,9000,10000,8500,12000,14000], backgroundColor:'#10b981' }]
+      },
+      options: { responsive:true, plugins:{ legend:{ display:false } } }
+    });
+
+    new Chart(document.getElementById('profitMargin'), {
+      type: 'line',
+      data: {
+        labels: ['Jan','Feb','Mar','Apr','May','Jun'],
+        datasets: [{ label: 'Profit Margin %', data: [53, 61, 60, 62, 59, 64], borderColor:'#f59e0b', tension:0.4, fill:false }]
+      },
+      options: { responsive:true, plugins:{ legend:{ position:'bottom' } }, scales:{ y:{ beginAtZero:true, max:100 } } }
+    });
+
+    // === INVENTORY SYSTEM ===
+    const inventoryBody = document.getElementById('inventoryBody');
+    const monthSelect = document.getElementById('monthSelect');
+    const yearInput = document.getElementById('yearInput');
+    const goDateBtn = document.getElementById('goDate');
+    const searchInput = document.getElementById('searchProduct');
+    const calendarViewBtn = document.getElementById('calendarViewBtn');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const calendarViewContainer = document.getElementById('calendarViewContainer');
+    const listViewContainer = document.getElementById('listViewContainer');
+    const calendarHeader = document.getElementById('calendarHeader');
+    const calendarDays = document.getElementById('calendarDays');
+    const addProductBtn = document.getElementById('addProductBtn');
+    const addProductModal = document.getElementById('addProductModal');
+    const closeModal = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
+    const addProductForm = document.getElementById('addProductForm');
+    const productDate = document.getElementById('productDate');
+    const productCategory = document.getElementById('productCategory');
+    
+    // Category Management
+    const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
+    const categoryModal = document.getElementById('categoryModal');
+    const closeCategoryModal = document.getElementById('closeCategoryModal');
+    const closeCategoryBtn = document.getElementById('closeCategoryBtn');
+    const categoryList = document.getElementById('categoryList');
+    const newCategoryInput = document.getElementById('newCategoryInput');
+    const addCategoryBtn = document.getElementById('addCategoryBtn');
+
+    let currentMonth = new Date().getMonth(); // Current month
+    let currentYear = new Date().getFullYear(); // Current year
+    let currentView = 'calendar';
+    let selectedDate = null;
+    
+    // Categories array
+    let categories = ['IV', 'TABS/CAPS', 'GALLON', 'BOX', 'PIECE'];
+
+    // Sample inventory data
+    let inventoryData = [
+      { date: '2026-01-21', category: 'BOX', product: 'Surgical Gloves', batch: 'A101/2027-06', qty: 50, status: 'Available' },
+      { date: '2026-01-21', category: 'PIECE', product: 'Syringe 5ml', batch: 'B201/2027-12', qty: 30, status: 'Low Stock' },
+      { date: '2026-01-22', category: 'IV', product: 'Saline Solution', batch: 'C301/2026-08', qty: 100, status: 'Available' },
+      { date: '2026-01-23', category: 'BOX', product: 'Bandages', batch: 'D401/2027-03', qty: 75, status: 'Available' },
+      { date: '2026-01-23', category: 'BOX', product: 'Alcohol Swabs', batch: 'E501/2026-11', qty: 15, status: 'Low Stock' },
+      { date: '2026-01-25', category: 'PIECE', product: 'Face Masks', batch: 'F601/2027-01', qty: 200, status: 'Available' },
+      { date: '2026-01-28', category: 'BOX', product: 'Cotton Balls', batch: 'G701/2027-05', qty: 5, status: 'Out of Stock' },
+      { date: '2026-01-21', category: 'TABS/CAPS', product: 'Paracetamol 500mg', batch: 'H801/2027-09', qty: 120, status: 'Available' },
+      { date: '2026-01-22', category: 'GALLON', product: 'Distilled Water', batch: 'I901/2026-12', qty: 25, status: 'Available' },
+      { date: '2026-01-23', category: 'IV', product: 'Dextrose 5%', batch: 'J101/2027-04', qty: 45, status: 'Low Stock' },
+    ];
+
+    // Set today's date in modal by default
+    const today = new Date().toISOString().split('T')[0];
+    productDate.value = today;
+    
+    // Populate category dropdown
+    function populateCategoryDropdown() {
+      productCategory.innerHTML = '<option value="">Select Category</option>';
+      categories.forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat;
+        productCategory.appendChild(option);
+      });
+    }
+    
+    // Render category list in management modal
+    function renderCategoryList() {
+      categoryList.innerHTML = categories.map((cat, index) => `
+        <div class="category-item">
+          <input type="text" value="${cat}" id="cat-${index}" disabled>
+          <div class="category-item-actions">
+            <button class="btn-icon edit" onclick="editCategory(${index})">✏️</button>
+            <button class="btn-icon delete" onclick="deleteCategory(${index})">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+    
+    // Edit category
+    window.editCategory = function(index) {
+      const input = document.getElementById(`cat-${index}`);
+      const isDisabled = input.disabled;
+      
+      if (isDisabled) {
+        input.disabled = false;
+        input.focus();
+        input.select();
+      } else {
+        const newName = input.value.trim();
+        if (newName && newName !== categories[index]) {
+          // Update category name in inventory data
+          const oldName = categories[index];
+          inventoryData.forEach(item => {
+            if (item.category === oldName) {
+              item.category = newName;
+            }
+          });
+          categories[index] = newName;
+          categories.sort();
+          populateCategoryDropdown();
+          renderCategoryList();
+          
+          // Refresh view if needed
+          if (currentView === 'list') {
+            renderListView();
+          } else {
+            renderCalendar();
+          }
+        }
+        input.disabled = true;
+      }
+    };
+    
+    // Delete category
+    window.deleteCategory = function(index) {
+      const categoryToDelete = categories[index];
+      const itemsInCategory = inventoryData.filter(item => item.category === categoryToDelete).length;
+      
+      if (itemsInCategory > 0) {
+        if (!confirm(`There are ${itemsInCategory} product(s) in "${categoryToDelete}". Delete anyway?`)) {
+          return;
+        }
+      }
+      
+      categories.splice(index, 1);
+      populateCategoryDropdown();
+      renderCategoryList();
+      
+      // Refresh view if needed
+      if (currentView === 'list') {
+        renderListView();
+      }
+    };
+    
+    // Add new category
+    addCategoryBtn.addEventListener('click', () => {
+      const newCategory = newCategoryInput.value.trim().toUpperCase();
+      
+      if (!newCategory) {
+        alert('Please enter a category name');
+        return;
+      }
+      
+      if (categories.includes(newCategory)) {
+        alert('Category already exists');
+        return;
+      }
+      
+      categories.push(newCategory);
+      categories.sort();
+      newCategoryInput.value = '';
+      populateCategoryDropdown();
+      renderCategoryList();
+    });
+    
+    // Category modal controls
+    manageCategoriesBtn.addEventListener('click', () => {
+      renderCategoryList();
+      categoryModal.classList.add('active');
+    });
+    
+    closeCategoryModal.addEventListener('click', () => {
+      categoryModal.classList.remove('active');
+    });
+    
+    closeCategoryBtn.addEventListener('click', () => {
+      categoryModal.classList.remove('active');
+    });
+    
+    // Initialize category dropdown
+    populateCategoryDropdown();
+
+    // View Toggle
+    calendarViewBtn.addEventListener('click', () => {
+      currentView = 'calendar';
+      calendarViewBtn.classList.add('active');
+      listViewBtn.classList.remove('active');
+      calendarViewContainer.style.display = 'block';
+      listViewContainer.classList.remove('active');
+      renderCalendar();
+    });
+
+    listViewBtn.addEventListener('click', () => {
+      currentView = 'list';
+      listViewBtn.classList.add('active');
+      calendarViewBtn.classList.remove('active');
+      calendarViewContainer.style.display = 'none';
+      listViewContainer.classList.add('active');
+      renderListView();
+    });
+
+    // Month/Year Selection
+    goDateBtn.addEventListener('click', () => {
+      currentMonth = parseInt(monthSelect.value);
+      currentYear = parseInt(yearInput.value) || 2026;
+      if (currentView === 'calendar') {
+        renderCalendar();
+      } else {
+        renderListView();
+      }
+    });
+
+    // Update calendar when month or year changes
+    monthSelect.addEventListener('change', () => {
+      currentMonth = parseInt(monthSelect.value);
+      if (currentView === 'calendar') {
+        renderCalendar();
+      }
+    });
+
+    yearInput.addEventListener('change', () => {
+      currentYear = parseInt(yearInput.value) || 2026;
+      if (currentView === 'calendar') {
+        renderCalendar();
+      }
+    });
+
+    // Search
+    searchInput.addEventListener('input', () => {
+      if (currentView === 'list') {
+        renderListView();
+      }
+    });
+
+    // Modal Controls
+    addProductBtn.addEventListener('click', () => {
+      addProductModal.classList.add('active');
+    });
+
+    closeModal.addEventListener('click', () => {
+      addProductModal.classList.remove('active');
+      addProductForm.reset();
+      productDate.value = today;
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      addProductModal.classList.remove('active');
+      addProductForm.reset();
+      productDate.value = today;
+    });
+
+    // Add Product Form Submit
+    addProductForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const newProduct = {
+        date: document.getElementById('productDate').value,
+        category: document.getElementById('productCategory').value,
+        product: document.getElementById('productName').value,
+        batch: document.getElementById('productBatch').value,
+        qty: parseInt(document.getElementById('productQty').value),
+        status: document.getElementById('productStatus').value
+      };
+      
+      inventoryData.push(newProduct);
+      inventoryData.sort((a, b) => {
+        const dateCompare = new Date(a.date) - new Date(b.date);
+        if (dateCompare !== 0) return dateCompare;
+        return a.category.localeCompare(b.category);
+      });
+      
+      addProductModal.classList.remove('active');
+      addProductForm.reset();
+      productDate.value = today;
+      
+      if (currentView === 'calendar') {
+        renderCalendar();
+      } else {
+        renderListView();
+      }
+    });
+
+    // Render Calendar View
+    function renderCalendar() {
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
+                         'July', 'August', 'September', 'October', 'November', 'December'];
+      
+      calendarHeader.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+      
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+      
+      let html = '';
+      
+      // Previous month days
+      for (let i = firstDay - 1; i >= 0; i--) {
+        html += `<div class="calendar-day other-month">
+          <div class="day-number">${prevMonthDays - i}</div>
+        </div>`;
+      }
+      
+      // Current month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayItems = inventoryData.filter(item => item.date === dateStr);
+        const isSelected = selectedDate === dateStr;
+        
+        html += `<div class="calendar-day ${isSelected ? 'selected' : ''}" data-date="${dateStr}">
+          <div class="day-number">${day}</div>
+          <div class="day-items">
+            ${dayItems.length > 0 ? `<span class="day-badge">${dayItems.length} item${dayItems.length > 1 ? 's' : ''}</span>` : ''}
+          </div>
+        </div>`;
+      }
+      
+      // Next month days
+      const totalCells = firstDay + daysInMonth;
+      const remainingCells = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+      for (let i = 1; i <= remainingCells; i++) {
+        html += `<div class="calendar-day other-month">
+          <div class="day-number">${i}</div>
+        </div>`;
+      }
+      
+      calendarDays.innerHTML = html;
+      
+      // Add click handlers to calendar days
+      document.querySelectorAll('.calendar-day:not(.other-month)').forEach(day => {
+        day.addEventListener('click', () => {
+          selectedDate = day.dataset.date;
+          renderCalendar();
+          showDayDetails(selectedDate);
+        });
+        
+        // Double-click to go to list view for that date
+        day.addEventListener('dblclick', () => {
+          selectedDate = day.dataset.date;
+          currentView = 'list';
+          listViewBtn.classList.add('active');
+          calendarViewBtn.classList.remove('active');
+          calendarViewContainer.style.display = 'none';
+          listViewContainer.classList.add('active');
+          renderListViewForDate(selectedDate);
+        });
+      });
+    }
+
+    // Show day details when clicked
+    function showDayDetails(dateStr) {
+      const items = inventoryData.filter(item => item.date === dateStr);
+      if (items.length > 0) {
+        // Group by category for the alert
+        const grouped = {};
+        items.forEach(item => {
+          if (!grouped[item.category]) grouped[item.category] = [];
+          grouped[item.category].push(item);
+        });
+        
+        let message = `Items on ${dateStr}:\n\n`;
+        Object.keys(grouped).sort().forEach(category => {
+          message += `${category}:\n`;
+          grouped[category].forEach(item => {
+            message += `  • ${item.product} (${item.batch})\n    Qty: ${item.qty} - ${item.status}\n`;
+          });
+          message += '\n';
+        });
+        
+        alert(message);
+      }
+    }
+
+    // Render List View
+    function renderListView() {
+      const monthStart = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-01`;
+      const monthEnd = `${currentYear}-${String(currentMonth + 2).padStart(2, '0')}-01`;
+      
+      let filtered = inventoryData.filter(item => {
+        const itemDate = item.date;
+        return itemDate >= monthStart && itemDate < monthEnd;
+      });
+      
+      const search = searchInput.value.toLowerCase();
+      if (search) {
+        filtered = filtered.filter(item => 
+          item.product.toLowerCase().includes(search) ||
+          item.batch.toLowerCase().includes(search) ||
+          item.category.toLowerCase().includes(search)
+        );
+      }
+      
+      if (filtered.length === 0) {
+        inventoryBody.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <h3>No inventory found</h3>
+            <p>Try adjusting your filters or add new products</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Group by category
+      const groupedByCategory = {};
+      filtered.forEach(item => {
+        if (!groupedByCategory[item.category]) {
+          groupedByCategory[item.category] = [];
+        }
+        groupedByCategory[item.category].push(item);
+      });
+      
+      // Sort categories
+      const categories = Object.keys(groupedByCategory).sort();
+      
+      let html = '';
+      categories.forEach(category => {
+        const items = groupedByCategory[category];
+        html += `
+          <div class="category-section">
+            <div class="category-title">
+              <span>${category}</span>
+              <span class="category-count">${items.length} item${items.length > 1 ? 's' : ''}</span>
+            </div>
+            <div class="category-items">
+        `;
+        
+        items.forEach(item => {
+          const statusClass = item.status === 'Available' ? 'status-available' : 
+                             item.status === 'Low Stock' ? 'status-low' : 'status-out';
+          html += `
+            <div class="inventory-card">
+              <div class="card-field">
+                <div class="card-label">Product Name</div>
+                <div class="card-value product-name">${item.product}</div>
+              </div>
+              <div class="card-field">
+                <div class="card-label">Batch / Expiry</div>
+                <div class="card-value">${item.batch}</div>
+              </div>
+              <div class="card-field">
+                <div class="card-label">Quantity</div>
+                <div class="card-value">${item.qty}</div>
+              </div>
+              <div class="card-field">
+                <div class="card-label">Status</div>
+                <div class="status-badge ${statusClass}">${item.status}</div>
+              </div>
+            </div>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+      
+      inventoryBody.innerHTML = html;
+    }
+
+    // Render List View for specific date
+    function renderListViewForDate(dateStr) {
+      let filtered = inventoryData.filter(item => item.date === dateStr);
+      
+      const search = searchInput.value.toLowerCase();
+      if (search) {
+        filtered = filtered.filter(item => 
+          item.product.toLowerCase().includes(search) ||
+          item.batch.toLowerCase().includes(search) ||
+          item.category.toLowerCase().includes(search)
+        );
+      }
+      
+      if (filtered.length === 0) {
+        inventoryBody.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <h3>No inventory for ${dateStr}</h3>
+            <p>No products found for this date</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Group by category
+      const groupedByCategory = {};
+      filtered.forEach(item => {
+        if (!groupedByCategory[item.category]) {
+          groupedByCategory[item.category] = [];
+        }
+        groupedByCategory[item.category].push(item);
+      });
+      
+      // Sort categories
+      const categories = Object.keys(groupedByCategory).sort();
+      
+      let html = '';
+      categories.forEach(category => {
+        const items = groupedByCategory[category];
+        html += `
+          <div class="category-section">
+            <div class="category-title">
+              <span>${category}</span>
+              <span class="category-count">${items.length} item${items.length > 1 ? 's' : ''}</span>
+            </div>
+            <div class="category-items">
+        `;
+        
+        items.forEach(item => {
+          const statusClass = item.status === 'Available' ? 'status-available' : 
+                             item.status === 'Low Stock' ? 'status-low' : 'status-out';
+          html += `
+            <div class="inventory-card">
+              <div class="card-field">
+                <div class="card-label">Product Name</div>
+                <div class="card-value product-name">${item.product}</div>
+              </div>
+              <div class="card-field">
+                <div class="card-label">Batch / Expiry</div>
+                <div class="card-value">${item.batch}</div>
+              </div>
+              <div class="card-field">
+                <div class="card-label">Quantity</div>
+                <div class="card-value">${item.qty}</div>
+              </div>
+              <div class="card-field">
+                <div class="card-label">Status</div>
+                <div class="status-badge ${statusClass}">${item.status}</div>
+              </div>
+            </div>
+          `;
+        });
+        
+        html += `
+            </div>
+          </div>
+        `;
+      });
+      
+      inventoryBody.innerHTML = html;
+    }
+
+    // Initialize
+    monthSelect.value = currentMonth;
+    yearInput.value = currentYear;
+    renderCalendar();
+  </script>
+</body>
+</html>
